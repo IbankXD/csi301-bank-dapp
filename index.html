@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSI301 - Bank Smart Contract DApp (Assignment 6)</title>
+    <!-- Web3.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.4/dist/web3.min.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --success-hover: #059669;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --warning: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 620px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 1. Header Section */
+        .header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .student-badge {
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            border-radius: 10px;
+            padding: 10px 14px;
+        }
+
+        .student-badge h1 {
+            font-size: 1.2rem;
+            margin-bottom: 4px;
+            color: #60a5fa;
+        }
+
+        .student-info {
+            font-size: 0.95rem;
+            color: var(--text-main);
+            line-height: 1.5;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 10px;
+            padding: 11px 18px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-connect {
+            background-color: var(--primary);
+        }
+        .btn-connect:hover:not(:disabled) {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-deposit {
+            background-color: var(--success);
+            flex: 1;
+        }
+        .btn-deposit:hover:not(:disabled) {
+            background-color: var(--success-hover);
+        }
+
+        .btn-withdraw {
+            background-color: var(--danger);
+            flex: 1;
+        }
+        .btn-withdraw:hover:not(:disabled) {
+            background-color: var(--danger-hover);
+        }
+
+        .btn-check {
+            background-color: #6366f1;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .btn-check:hover:not(:disabled) {
+            background-color: #4f46e5;
+        }
+
+        /* Contract Config */
+        .section-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        input, select {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+        }
+
+        .unit-select {
+            width: 110px;
+            flex-shrink: 0;
+        }
+
+        /* 2. Interaction Section */
+        .balance-box {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(16, 185, 129, 0.1));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .balance-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .balance-value {
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: #38bdf8;
+            word-break: break-all;
+        }
+
+        .balance-sub {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        /* 3. Feedback Section */
+        .status-box {
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            word-break: break-all;
+            line-height: 1.5;
+        }
+
+        .status-box.pending {
+            border-color: var(--warning);
+            color: #fde68a;
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .status-box.success {
+            border-color: var(--success);
+            color: #a7f3d0;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .status-box.error {
+            border-color: var(--danger);
+            color: #fecaca;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .meta-info {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 1. Header Section: Student Identity & Connect Wallet -->
+    <div class="header">
+        <div class="student-badge">
+            <h1>🏦 Web3 Bank DApp</h1>
+            <div class="student-info">
+                <div><strong>รหัสนักศึกษา:</strong> <span id="studentIdText">66026188</span></div>
+                <div><strong>ชื่อ-สกุล:</strong> <span id="studentNameText">ศิวัฒน์ แก้วหนองสังข์</span></div>
+            </div>
+        </div>
+        <button id="connectBtn" class="btn btn-connect" onclick="connectMetaMask()">
+            🦊 Connect MetaMask
+        </button>
+    </div>
+
+    <!-- Smart Contract Connection Section -->
+    <div class="section-card">
+        <div class="section-title">1. การเชื่อมต่อ Smart Contract & MetaMask</div>
+        <div class="input-group">
+            <input type="text" id="contractAddressInput" value="0x76cFd28899e24F1cdc7E308877e623AdB63bd725" placeholder="วาง Contract Address ที่ได้จากการ Deploy (0x...)" />
+            <button class="btn btn-connect" onclick="initContract()" style="white-space: nowrap;">
+                เชื่อมต่อสัญญา
+            </button>
+        </div>
+        <div class="meta-info" id="walletStatus">สถานะกระเป๋า: ยังไม่ได้เชื่อมต่อ MetaMask</div>
+        <div class="meta-info" id="contractStatus">สถานะสัญญา: พร้อมเชื่อมต่อที่ 0x76cFd28899e24F1cdc7E308877e623AdB63bd725</div>
+    </div>
+
+    <!-- 2. Interaction Section: CheckBalance, Deposit, Withdraw -->
+    <div class="balance-box">
+        <div class="balance-label">ยอดเงินคงเหลือในธนาคาร (CheckBlance)</div>
+        <div class="balance-value" id="balanceDisplay">0 Wei</div>
+        <div class="balance-sub" id="balanceEthDisplay">(0 ETH)</div>
+        <button id="checkBalanceBtn" class="btn btn-check" onclick="checkBlance()" disabled>
+            🔍 CheckBlance (ตรวจสอบยอดเงิน)
+        </button>
+    </div>
+
+    <div class="section-card">
+        <div class="section-title">2. ทำธุรกรรม ฝากเงิน (Deposit) / ถอนเงิน (Withdraw)</div>
+        <div class="input-group">
+            <input type="number" id="amountInput" placeholder="ระบุจำนวนเงิน เช่น 100 หรือ 0.01" min="0" step="any" />
+            <select id="unitSelect" class="unit-select">
+                <option value="wei">Wei</option>
+                <option value="ether">ETH</option>
+            </select>
+        </div>
+        <div class="action-row">
+            <button id="depositBtn" class="btn btn-deposit" onclick="deposit()" disabled>
+                📥 Deposit (ฝากเงิน)
+            </button>
+            <button id="withdrawBtn" class="btn btn-withdraw" onclick="withdraw()" disabled>
+                📤 Withdraw (ถอนเงิน)
+            </button>
+        </div>
+    </div>
+
+    <!-- 3. Feedback Section -->
+    <div class="section-title">3. สถานะการทำงาน (Transaction Feedback)</div>
+    <div id="statusBox" class="status-box">
+        พร้อมใช้งาน กรุณากด Connect MetaMask และระบุ Contract Address
+    </div>
+</div>
+
+<script>
+    // =========================================================================
+    // ตั้งค่าข้อมูลนักศึกษา และ Contract Address เริ่มต้นที่นี่
+    // =========================================================================
+    const STUDENT_ID = "66026188";
+    const STUDENT_NAME = "ศิวัฒน์ แก้วหนองสังข์";
+    const DEFAULT_CONTRACT_ADDRESS = "0x76cFd28899e24F1cdc7E308877e623AdB63bd725";
+
+    // ABI ของ Smart Contract Bank ตามโจทย์ L_Assignment 6.pdf
+    const BANK_ABI = [
+        {
+            "anonymous": false,
+            "inputs": [
+                { "indexed": true, "internalType": "address", "name": "owner", "type": "address" },
+                { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }
+            ],
+            "name": "Deposit",
+            "type": "event"
+        },
+        {
+            "anonymous": false,
+            "inputs": [
+                { "indexed": true, "internalType": "address", "name": "owner", "type": "address" },
+                { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }
+            ],
+            "name": "Withdraw",
+            "type": "event"
+        },
+        {
+            "inputs": [],
+            "name": "checkBlance",
+            "outputs": [
+                { "internalType": "uint256", "name": "balance", "type": "uint256" }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "deposit",
+            "outputs": [],
+            "stateMutability": "payable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                { "internalType": "uint256", "name": "amount", "type": "uint256" }
+            ],
+            "name": "withdraw",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        }
+    ];
+
+    let web3 = null;
+    let userAccount = null;
+    let bankContract = null;
+
+    // แสดงข้อมูลนักศึกษาเมื่อโหลดหน้าเว็บ
+    window.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("studentIdText").textContent = STUDENT_ID;
+        document.getElementById("studentNameText").textContent = STUDENT_NAME;
+
+        if (DEFAULT_CONTRACT_ADDRESS) {
+            document.getElementById("contractAddressInput").value = DEFAULT_CONTRACT_ADDRESS;
+        }
+
+        // ตรวจสอบการเปลี่ยนบัญชีใน MetaMask
+        if (window.ethereum) {
+            window.ethereum.on("accountsChanged", (accounts) => {
+                if (accounts.length > 0) {
+                    userAccount = accounts[0];
+                    document.getElementById("walletStatus").textContent = `สถานะกระเป๋า: เชื่อมต่อแล้ว (${userAccount})`;
+                    if (bankContract) checkBlance();
+                } else {
+                    userAccount = null;
+                    document.getElementById("walletStatus").textContent = "สถานะกระเป๋า: ยังไม่ได้เชื่อมต่อ MetaMask";
+                    setButtonsEnabled(false);
+                }
+            });
+        }
+    });
+
+    function setStatus(message, type = "") {
+        const box = document.getElementById("statusBox");
+        box.textContent = message;
+        box.className = "status-box " + type;
+    }
+
+    function setButtonsEnabled(enabled) {
+        document.getElementById("checkBalanceBtn").disabled = !enabled;
+        document.getElementById("depositBtn").disabled = !enabled;
+        document.getElementById("withdrawBtn").disabled = !enabled;
+    }
+
+    // 1. การเชื่อมต่อ MetaMask
+    async function connectMetaMask() {
+        if (typeof window.ethereum === "undefined") {
+            setStatus("❌ ไม่พบ MetaMask! กรุณาติดตั้งส่วนขยาย MetaMask ในเบราว์เซอร์ก่อนใช้งาน", "error");
+            return;
+        }
+
+        try {
+            setStatus("⏳ กำลังขอสิทธิ์เชื่อมต่อกระเป๋า MetaMask...", "pending");
+            const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+            web3 = new Web3(window.ethereum);
+            userAccount = accounts[0];
+
+            document.getElementById("walletStatus").textContent = `สถานะกระเป๋า: เชื่อมต่อแล้ว (${userAccount})`;
+            document.getElementById("connectBtn").textContent = "✅ เชื่อมต่อ MetaMask แล้ว";
+
+            const addressInput = document.getElementById("contractAddressInput").value.trim();
+            if (addressInput) {
+                await initContract();
+            } else {
+                setStatus("✅ เชื่อมต่อ MetaMask สำเร็จ! กรุณาวาง Contract Address แล้วกด 'เชื่อมต่อสัญญา'", "success");
+            }
+        } catch (err) {
+            setStatus(`❌ การเชื่อมต่อ MetaMask ล้มเหลว: ${err.message}`, "error");
+        }
+    }
+
+    // 2. การเชื่อมต่อ Smart Contract
+    async function initContract() {
+        if (!web3 || !userAccount) {
+            await connectMetaMask();
+            if (!web3 || !userAccount) return;
+        }
+
+        const contractAddress = document.getElementById("contractAddressInput").value.trim();
+        if (!web3.utils.isAddress(contractAddress)) {
+            setStatus("❌ รูปแบบ Contract Address ไม่ถูกต้อง (ต้องขึ้นต้นด้วย 0x และมีความยาว 42 ตัวอักษร)", "error");
+            return;
+        }
+
+        try {
+            bankContract = new web3.eth.Contract(BANK_ABI, contractAddress);
+            document.getElementById("contractStatus").textContent = `สถานะสัญญา: เชื่อมต่อที่ ${contractAddress}`;
+            setButtonsEnabled(true);
+            setStatus("✅ เชื่อมต่อ Smart Contract สำเร็จ! กำลังดึงยอดเงินคงเหลือ...", "success");
+            await checkBlance();
+        } catch (err) {
+            setStatus(`❌ ไม่สามารถเชื่อมต่อ Smart Contract ได้: ${err.message}`, "error");
+        }
+    }
+
+    // แปลงค่าที่กรอกตามหน่วยที่เลือก (Wei หรือ ETH) ให้เป็น Wei
+    function getAmountInWei() {
+        const rawAmount = document.getElementById("amountInput").value.trim();
+        const unit = document.getElementById("unitSelect").value;
+
+        if (!rawAmount || Number(rawAmount) <= 0) {
+            throw new Error("กรุณาระบุจำนวนเงินที่มากกว่า 0");
+        }
+
+        if (unit === "ether") {
+            return web3.utils.toWei(rawAmount, "ether");
+        } else {
+            if (!/^\d+$/.test(rawAmount)) {
+                throw new Error("หน่วย Wei ต้องเป็นจำนวนเต็มบวกเท่านั้น");
+            }
+            return rawAmount;
+        }
+    }
+
+    // 3. ฟังก์ชัน CheckBlance (Read-Only / 0 Gas)
+    async function checkBlance() {
+        if (!bankContract || !userAccount) return;
+
+        try {
+            setStatus("⏳ กำลังเรียกดูยอดเงินคงเหลือ (checkBlance)...", "pending");
+            const balanceWei = await bankContract.methods.checkBlance().call({ from: userAccount });
+            const balanceEth = web3.utils.fromWei(balanceWei.toString(), "ether");
+
+            document.getElementById("balanceDisplay").textContent = `${balanceWei} Wei`;
+            document.getElementById("balanceEthDisplay").textContent = `(${balanceEth} ETH)`;
+            setStatus(`✅ อัปเดตยอดเงินสำเร็จ: ${balanceWei} Wei (${balanceEth} ETH)`, "success");
+        } catch (err) {
+            setStatus(`❌ ตรวจสอบยอดเงินไม่สำเร็จ: ${err.message}`, "error");
+        }
+    }
+
+    // 4. ฟังก์ชัน Deposit (State-Changing / Payable)
+    async function deposit() {
+        if (!bankContract || !userAccount) return;
+
+        try {
+            const amountWei = getAmountInWei();
+            setStatus(`⏳ กำลังส่งธุรกรรมฝากเงิน (Deposit) จำนวน ${amountWei} Wei... กรุณายืนยันใน MetaMask`, "pending");
+
+            const tx = await bankContract.methods.deposit().send({
+                from: userAccount,
+                value: amountWei
+            });
+
+            setStatus(`✅ ฝากเงินสำเร็จ! Transaction Hash: ${tx.transactionHash}`, "success");
+            document.getElementById("amountInput").value = "";
+            await checkBlance();
+        } catch (err) {
+            setStatus(`❌ ฝากเงินไม่สำเร็จ: ${err.message}`, "error");
+        }
+    }
+
+    // 5. ฟังก์ชัน Withdraw (State-Changing)
+    async function withdraw() {
+        if (!bankContract || !userAccount) return;
+
+        try {
+            const amountWei = getAmountInWei();
+            setStatus(`⏳ กำลังส่งธุรกรรมถอนเงิน (Withdraw) จำนวน ${amountWei} Wei... กรุณายืนยันใน MetaMask`, "pending");
+
+            const tx = await bankContract.methods.withdraw(amountWei).send({
+                from: userAccount
+            });
+
+            setStatus(`✅ ถอนเงินสำเร็จ! Transaction Hash: ${tx.transactionHash}`, "success");
+            document.getElementById("amountInput").value = "";
+            await checkBlance();
+        } catch (err) {
+            setStatus(`❌ ถอนเงินไม่สำเร็จ: ${err.message}`, "error");
+        }
+    }
+</script>
+
+</body>
+</html>
